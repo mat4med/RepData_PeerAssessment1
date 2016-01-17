@@ -11,11 +11,15 @@ library(dplyr)
 ```
 ## 
 ## Attaching package: 'dplyr'
-## 
+```
+
+```
 ## The following objects are masked from 'package:stats':
 ## 
 ##     filter, lag
-## 
+```
+
+```
 ## The following objects are masked from 'package:base':
 ## 
 ##     intersect, setdiff, setequal, union
@@ -73,7 +77,7 @@ abline(v = mean(total_steps$total_steps_per_day), lwd = 2, lty = 2, col = "blue"
 abline(v = median(total_steps$total_steps_per_day), lwd = 2, lty = 2, col = "red")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)\
 
 
 ## What is the average daily activity pattern?
@@ -81,24 +85,31 @@ find the average steps
 
 ```r
 ave_steps <- summarise(activity_grp, ave_steps_per_day = mean(steps, na.rm = TRUE))
+stepsInterval <- aggregate(steps ~ interval, data = activity, mean, na.rm = TRUE)
 ```
 
 then plot
 
 ```r
-plot(ave_steps_per_day ~ date, ave_steps, type = "l")
+plot(steps ~ interval, data = stepsInterval, type = "l")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)\
+
+```r
+## other thought to plot avearge ?! 
+## plot(ave_steps_per_day ~ date, ave_steps, type = "l")
+```
 
 find max. ave. steps
 
 ```r
-max(ave_steps$ave_steps_per_day[complete.cases(ave_steps)])
+##max(ave_steps$ave_steps_per_day[complete.cases(ave_steps)])
+stepsInterval[which.max(stepsInterval$steps), ]$interval
 ```
 
 ```
-## [1] 73.59028
+## [1] 835
 ```
 then find the date with max. ave.
 
@@ -168,6 +179,16 @@ calculate total of steps for each day
 updated_total_steps <- summarise(updated_activity_grp, total_steps_per_day = sum(steps, na.rm = TRUE))
 ```
 
+A histogram of the total number of steps taken each day
+
+```r
+updated_total_steps2 <- aggregate(steps ~ date, data = updated_activity, sum)
+hist(updated_total_steps2$steps)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-18-1.png)\
+
+
 find mean and median (notice: both are higher than the estimates in first part)
 
 ```r
@@ -186,18 +207,37 @@ median(updated_total_steps$total_steps_per_day)
 ## [1] 10656
 ```
 
+load library
+
+```r
+library(ggplot2)
+```
 plot both datasets to show the impact of imputing missing data
 
 ```r
 ## original data:
-plot(total_steps_per_day ~ date, total_steps, type = "l", col = "blue")
+#plot(total_steps_per_day ~ date, total_steps, type = "l", col = "blue")
 ## updated data:
-lines(total_steps_per_day ~ date, updated_total_steps, col = "red")
+#lines(total_steps_per_day ~ date, updated_total_steps, col = "red")
+# Group by date   
+updated_grp_date <- updated_activity %>% group_by(date)
+# Summarize the total steps per day (Tot_steps)
+total_steps_per_day <- updated_grp_date %>% summarize(total_steps = sum(steps))
+
+ggplot(total_steps_per_day, aes(x = total_steps))+
+  geom_histogram() +
+  ggtitle('Total Steps with replacement of missing values') 
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-19-1.png) 
-it shows both are mostly identical
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-21-1.png)\
+
+```r
+#plot(total_steps ~ date, total_steps_per_day, type = "h", col = "blue")
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 load library
@@ -222,12 +262,17 @@ library(ggplot2)
 plot weekdays and weekends
 
 ```r
-weekdays_weekends <- qplot(date, steps, data = updated_activity, 
+# Group by week and interval   
+updated_weekly_interval <- updated_activity %>% group_by(days,interval)
+# Summarize the total steps per day (Ave_steps)
+updated_ave_steps <- updated_weekly_interval %>% summarize(mean_steps = mean(steps))
+
+weekdays_weekends <- qplot(interval, mean_steps, data = updated_ave_steps, 
 	color = days, geom = "line", fill = days, facets = days~.)
 weekdays_weekends
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-23-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-25-1.png)\
 
 
 
